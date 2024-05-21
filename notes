@@ -1,0 +1,43 @@
+#How to shell into the container
+docker compose run --service-ports web bash
+
+#Running app from the container
+go run cmd/main.go -b 0.0.0.0
+
+#Delete everything
+docker system prune -f && \
+docker volume rm $(docker volume ls -q --filter dangling=true)
+
+#Retrieve list of customers
+curl http://localhost:3000/listcustomers
+
+#Send post request
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{"name":"Kiarra Kohler","email":"christyvolkman@kulas.net","address":"7797 Valleyland, Houston, New Mexico, 10683","number":84}' \
+  http://localhost:3000/addcustomer
+
+
+#Delete user
+curl --header "Content-Type: application/json" \
+  --request DELETE \
+  --data '{"email":"annabelzieme@bernhard.biz"}' \
+  http://localhost:3000/deletecustomer
+
+
+#Update user
+curl -X PUT http://localhost:3000/updatecustomer \
+     -H "Content-Type: application/json" \
+     -d '{
+           "email": "garlandcarter@koelpin.info",
+           "name": "Garland Carter",
+           "address": "9482 Roadbury, Washington, Nebraska, 13323",
+		   "number": 25
+         }'
+
+curl -X PUT http://localhost:3000/updatecustomer \
+-H "Content-Type: application/json" \
+-d '{
+	"email": "garlandcarter@koelpin.info",
+	"name": "John Graham"
+	}'
