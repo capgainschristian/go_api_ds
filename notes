@@ -1,3 +1,6 @@
+#Start the app
+docker compose up
+
 #How to shell into the container
 docker compose run --service-ports web bash
 
