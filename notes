@@ -24,7 +24,7 @@ curl --header "Content-Type: application/json" \
 #Delete user
 curl --header "Content-Type: application/json" \
   --request DELETE \
-  --data '{"email":"annabelzieme@bernhard.biz"}' \
+  --data '{"email":"christian.graham@grahamsummitllc.com"}' \
   http://localhost:3000/deletecustomer
 
 
@@ -32,15 +32,15 @@ curl --header "Content-Type: application/json" \
 curl -X PUT http://localhost:3000/updatecustomer \
      -H "Content-Type: application/json" \
      -d '{
-           "email": "garlandcarter@koelpin.info",
-           "name": "Garland Carter",
-           "address": "9482 Roadbury, Washington, Nebraska, 13323",
-		   "number": 25
+           "email": "christian.graham@grahamsummitllc.com",
+           "name": "Christian Graham",
+           "address": "888 Summit LLC Drive",
+		   "number": 1111
          }'
 
 curl -X PUT http://localhost:3000/updatecustomer \
 -H "Content-Type: application/json" \
 -d '{
-	"email": "garlandcarter@koelpin.info",
-	"name": "John Graham"
+	"email": "christian.graham@grahamsummitllc.com",
+	"name": "Alexander Graham"
 	}'
