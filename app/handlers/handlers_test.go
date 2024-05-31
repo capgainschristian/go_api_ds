@@ -23,7 +23,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestAddCustomer(t *testing.T) {
-	//database.DB.Db.Exec("DELETE FROM customers")
+	// This wipes the database first before running the test - future improvement is to spawn a different db for testing
+	database.DB.Db.Exec("DELETE FROM customers")
 
 	router := mux.NewRouter()
 	router.HandleFunc("/customer", AddCustomer).Methods("POST")
@@ -54,4 +55,44 @@ func TestAddCustomer(t *testing.T) {
 	var count int64
 	database.DB.Db.Model(models.Customer{}).Where("email = ?", customer.Email).Count(&count)
 	assert.Equal(t, int64(1), count)
+}
+
+func TestDeleteCustomer(t *testing.T) {
+	// This wipes the database first before running the test - future improvement is to spawn a different db for testing
+	database.DB.Db.Exec("DELETE FROM customers")
+
+	customer := &models.Customer{
+		Name:    "Christian Graham",
+		Email:   "christian.graham@grahamsummitllc.com",
+		Address: "777 Summit LLC Drive",
+		Number:  1111,
+	}
+
+	database.DB.Db.Create(&customer)
+
+	router := mux.NewRouter()
+	router.HandleFunc("/customer", AddCustomer).Methods("DELETE")
+
+	jsonCustomer, _ := json.Marshal(map[string]interface{}{
+		"id":    customer.ID,
+		"email": customer.Email,
+	})
+
+	req, err := http.NewRequest("DELETE", "/customer", bytes.NewBuffer(jsonCustomer))
+	if err != nil {
+		t.Fatal()
+	}
+	req.Header.Set("Content-Type", "applicaton/json")
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	expected := "Customer deleted successfully."
+	assert.Equal(t, expected, rr.Body.String())
+
+	// Verify customer was deleted
+	var count int64
+	database.DB.Db.Model(&models.Customer{}).Where("email = ?", customer.Email).Count(&count)
+	assert.Equal(t, int64(0), count)
 }
