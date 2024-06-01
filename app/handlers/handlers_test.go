@@ -15,6 +15,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
+
 	database.ConnectDb()
 
 	code := m.Run()
@@ -23,9 +24,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestAddCustomer(t *testing.T) {
+	if database.DB.Db == nil {
+		t.Fatal("Database is not initialized")
+	}
 	// This wipes the database first before running the test - future improvement is to spawn a different db for testing
-	database.DB.Db.Exec("DELETE FROM customers")
-
+	result := database.DB.Db.Exec("DELETE FROM customers")
+	if result.Error != nil {
+		t.Fatal("Failed to delete from customers:", result.Error)
+	}
 	router := mux.NewRouter()
 	router.HandleFunc("/customer", AddCustomer).Methods("POST")
 
@@ -71,7 +77,7 @@ func TestDeleteCustomer(t *testing.T) {
 	database.DB.Db.Create(&customer)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/customer", AddCustomer).Methods("DELETE")
+	router.HandleFunc("/customer", DeleteCustomer).Methods("DELETE")
 
 	jsonCustomer, _ := json.Marshal(map[string]interface{}{
 		"id":    customer.ID,
