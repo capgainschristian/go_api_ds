@@ -1,10 +1,9 @@
 // Need to add:
 // Error handling for all.
-// Testing.
+// Testing. - Need to fix testing.
 // Pagination for "all" retrieval.
-// Redis/caching.
+// Redis/caching. - Need to add to update. Then introduce async to make it even faster.
 // ENV vars/const.
-// Async/go channel.
 // Authorization?
 
 // CRUD: Create (Post), Read (Get), Update (Put), Delete (Delete)
@@ -12,6 +11,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,16 +28,22 @@ func main() {
 	database.ConnectDb()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "cache:6379",
 		Password: "capgainschristian",
 		DB:       0,
 	})
+
+	// Check Redis connectivity
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		log.Fatalf("Failed to connec to Redis: %v", err)
+	}
 
 	router := routes.SetupRouter(rdb)
 
 	log.Printf("Server listening on :%d...\n", PORT)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), router)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", PORT), router)
 
 	if err != nil {
 		log.Fatal(err)

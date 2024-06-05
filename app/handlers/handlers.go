@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -49,6 +50,7 @@ func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 	cacheKey := "customers:limit=" + strconv.Itoa(limit) + ":offset=" + strconv.Itoa(offset)
 	cachedCustomers, err := rdb.Get(ctx, cacheKey).Result()
 	if err == redis.Nil {
+		log.Println("Retrieved from the database.")
 		result := database.DB.Db.Limit(limit).Offset(offset).Find(&customers)
 		if result.Error != nil {
 			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
@@ -64,6 +66,7 @@ func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 		// Cache customers
 		err = rdb.Set(ctx, cacheKey, jsonResponse, 24*time.Hour).Err()
 		if err != nil {
+			log.Printf("Redis SET error: %v", err)
 			http.Error(w, "Failed to cache customers list", http.StatusInternalServerError)
 			return
 		}
@@ -71,8 +74,10 @@ func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 		w.WriteHeader(http.StatusOK)
 		w.Write(jsonResponse)
 	} else if err != nil {
+		log.Printf("Redis GET error: %v", err)
 		http.Error(w, "Failed to retrieve customers from cache", http.StatusInternalServerError)
 	} else {
+		log.Println("Retrieved from the cache.")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(cachedCustomers))
 	}
@@ -103,7 +108,15 @@ func AddCustomer(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 	ctx := context.Background()
 	err = rdb.Set(ctx, "customer:"+strconv.Itoa(int(customer.ID)), customerJSON, 24*time.Hour).Err()
 	if err != nil {
+		log.Printf("Redis SET error: %v", err)
 		http.Error(w, "Failed to add customer to the cache", http.StatusInternalServerError)
+		return
+	}
+
+	err = rdb.Del(ctx, "customers:limit=10:offset=0").Err()
+	if err != nil {
+		log.Printf("Redis DEL error: %v", err) // Log the error for debugging
+		http.Error(w, "Failed to invalidate cache", http.StatusInternalServerError)
 		return
 	}
 
