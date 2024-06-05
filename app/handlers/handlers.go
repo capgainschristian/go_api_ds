@@ -1,14 +1,17 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +21,7 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "API is up and running.")
 }
 
-func ListCustomers(w http.ResponseWriter, r *http.Request) {
+func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 	// Pagination: listcustomers?limit=10&offset=0
 	customers := []models.Customer{}
 
@@ -41,25 +44,42 @@ func ListCustomers(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result := database.DB.Db.Limit(limit).Offset(offset).Find(&customers)
+	// Check Redis first
+	ctx := context.Background()
+	cacheKey := "customers:limit=" + strconv.Itoa(limit) + ":offset=" + strconv.Itoa(offset)
+	cachedCustomers, err := rdb.Get(ctx, cacheKey).Result()
+	if err == redis.Nil {
+		result := database.DB.Db.Limit(limit).Offset(offset).Find(&customers)
+		if result.Error != nil {
+			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	if result.Error != nil {
-		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
-		return
+		jsonResponse, err := json.Marshal(customers)
+		if err != nil {
+			http.Error(w, "Failed to marshal customers", http.StatusInternalServerError)
+			return
+		}
+
+		// Cache customers
+		err = rdb.Set(ctx, cacheKey, jsonResponse, 24*time.Hour).Err()
+		if err != nil {
+			http.Error(w, "Failed to cache customers list", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResponse)
+	} else if err != nil {
+		http.Error(w, "Failed to retrieve customers from cache", http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(cachedCustomers))
 	}
 
-	w.WriteHeader(http.StatusOK)
-
-	jsonResponse, err := json.Marshal(customers)
-	if err != nil {
-		http.Error(w, "Failed to marshal customers", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(jsonResponse)
 }
 
-func AddCustomer(w http.ResponseWriter, r *http.Request) {
+func AddCustomer(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 	customer := new(models.Customer)
 
 	err := json.NewDecoder(r.Body).Decode(&customer)
@@ -73,6 +93,20 @@ func AddCustomer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to add customer to the database", http.StatusInternalServerError)
 		return
 	}
+
+	customerJSON, err := json.Marshal(customer)
+	if err != nil {
+		http.Error(w, "Failed to serialize customer data", http.StatusInternalServerError)
+		return
+	}
+
+	ctx := context.Background()
+	err = rdb.Set(ctx, "customer:"+strconv.Itoa(int(customer.ID)), customerJSON, 24*time.Hour).Err()
+	if err != nil {
+		http.Error(w, "Failed to add customer to the cache", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("Customer added successfully."))
 }

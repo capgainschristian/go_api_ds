@@ -8,6 +8,9 @@ services:
     volumes:
       - ./app:/usr/src/app
     command: go run ./cmd/main.go -b 0.0.0.0
+    depends_on:
+      - db
+      - cache
   db:
     image: postgres:alpine
     environment:
@@ -18,6 +21,24 @@ services:
       - 5432:5432
     volumes:
       - postgres-db:/var/lib/postgresql/data
-
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    environment:
+      - RDB_PASSWORD=${RDB_PASSWORD}
+    privileged: true
+    ports:
+      - '6397:6397'
+    depends_on:
+      - db
+    command: >
+      /bin/sh -c "
+        sysctl vm.overcommit_memory=1 &&
+        redis-server --save 20 1 --loglevel warning --requirepass $${RDB_PASSWORD}
+      "
+    volumes:
+      - cache:/data
 volumes:
+  cache:
+    driver: local
   postgres-db:

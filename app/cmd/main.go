@@ -18,6 +18,7 @@ import (
 
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/routes"
+	"github.com/go-redis/redis/v8"
 )
 
 const PORT = 3000
@@ -26,7 +27,13 @@ func main() {
 
 	database.ConnectDb()
 
-	router := routes.SetupRouter()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "capgainschristian",
+		DB:       0,
+	})
+
+	router := routes.SetupRouter(rdb)
 
 	log.Printf("Server listening on :%d...\n", PORT)
 
