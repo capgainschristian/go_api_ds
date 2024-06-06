@@ -11,15 +11,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/capgainschristian/go_api_ds/cache"
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/routes"
-	"github.com/go-redis/redis/v8"
 )
 
 const PORT = 3000
@@ -28,24 +26,13 @@ func main() {
 
 	database.ConnectDb()
 
-	redisPassword := os.Getenv("RDB_PASSWORD")
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "cache:6379",
-		Password: redisPassword,
-		DB:       0,
-	})
+	cache.ConnectRedis()
 
-	// Check Redis connectivity
-	_, err := rdb.Ping(context.Background()).Result()
-	if err != nil {
-		log.Fatalf("Failed to connec to Redis: %v", err)
-	}
-
-	router := routes.SetupRouter(rdb)
+	router := routes.SetupRouter(cache.RedisClient.Client)
 
 	log.Printf("Server listening on :%d...\n", PORT)
 
-	err = http.ListenAndServe(fmt.Sprintf(":%d", PORT), router)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), router)
 
 	if err != nil {
 		log.Fatal(err)

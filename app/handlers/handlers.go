@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/capgainschristian/go_api_ds/cache"
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
 	"github.com/go-redis/redis/v8"
@@ -48,7 +49,7 @@ func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 	// Check Redis first
 	ctx := context.Background()
 	cacheKey := "customers:limit=" + strconv.Itoa(limit) + ":offset=" + strconv.Itoa(offset)
-	cachedCustomers, err := rdb.Get(ctx, cacheKey).Result()
+	cachedCustomers, err := cache.RedisClient.Client.Get(ctx, cacheKey).Result()
 	if err == redis.Nil {
 		log.Println("Retrieved from the database.")
 		result := database.DB.Db.Limit(limit).Offset(offset).Find(&customers)
@@ -64,7 +65,7 @@ func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 		}
 
 		// Cache customers
-		err = rdb.Set(ctx, cacheKey, jsonResponse, 24*time.Hour).Err()
+		err = cache.RedisClient.Client.Set(ctx, cacheKey, jsonResponse, 24*time.Hour).Err()
 		if err != nil {
 			log.Printf("Redis SET error: %v", err)
 			http.Error(w, "Failed to cache customers list", http.StatusInternalServerError)
@@ -106,14 +107,14 @@ func AddCustomer(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 	}
 
 	ctx := context.Background()
-	err = rdb.Set(ctx, "customer:"+strconv.Itoa(int(customer.ID)), customerJSON, 24*time.Hour).Err()
+	err = cache.RedisClient.Client.Set(ctx, "customer:"+customer.Email, customerJSON, 24*time.Hour).Err()
 	if err != nil {
 		log.Printf("Redis SET error: %v", err)
 		http.Error(w, "Failed to add customer to the cache", http.StatusInternalServerError)
 		return
 	}
 
-	err = rdb.Del(ctx, "customers:limit=10:offset=0").Err()
+	err = cache.RedisClient.Client.Del(ctx, "customers:limit=10:offset=0").Err()
 	if err != nil {
 		log.Printf("Redis DEL error: %v", err) // Log the error for debugging
 		http.Error(w, "Failed to invalidate cache", http.StatusInternalServerError)

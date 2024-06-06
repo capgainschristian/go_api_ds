@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 
+	"github.com/capgainschristian/go_api_ds/cache"
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
 	"github.com/go-redis/redis/v8"
@@ -22,6 +22,8 @@ import (
 func TestMain(m *testing.M) {
 
 	database.ConnectDb()
+
+	cache.ConnectRedis()
 
 	code := m.Run()
 
@@ -41,16 +43,9 @@ func TestAddCustomer(t *testing.T) {
 		t.Fatal("Database is not initialized")
 	}
 
-	redisPassword := os.Getenv("RDB_PASSWORD")
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "cache:6379",
-		Password: redisPassword,
-		DB:       0,
-	})
-
-	_, err := rdb.Ping(context.Background()).Result()
+	_, err := cache.RedisClient.Client.Ping(context.Background()).Result()
 	if err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+		log.Fatalf("Redis is not running: %v", err)
 	}
 
 	// This wipes the database first before running the test - future improvement is to spawn a different db for testing
@@ -58,7 +53,7 @@ func TestAddCustomer(t *testing.T) {
 	if result.Error != nil {
 		t.Fatal("Failed to delete from customers:", result.Error)
 	}
-	router := setupRouter(rdb)
+	router := setupRouter(cache.RedisClient.Client)
 
 	customer := &models.Customer{
 		Name:    "Christian Graham",
@@ -88,19 +83,19 @@ func TestAddCustomer(t *testing.T) {
 	assert.Equal(t, int64(1), count)
 
 	ctx := context.Background()
-	cacheKey := "customer:" + strconv.Itoa(int(customer.ID)) // Assuming customer.ID is the unique identifier
+	cacheKey := "customer:" + customer.Email
 	customerJSON, err := json.Marshal(customer)
 	if err != nil {
 		t.Fatalf("Failed to marshal customer: %v", err)
 	}
 
-	err = rdb.Set(ctx, cacheKey, customerJSON, 24*time.Hour).Err()
+	err = cache.RedisClient.Client.Set(ctx, cacheKey, customerJSON, 24*time.Hour).Err()
 	if err != nil {
 		t.Fatalf("Failed to add customer to the cache: %v", err)
 	}
 
 	// Verify customer was added to the cache
-	cachedCustomer, err := rdb.Get(ctx, cacheKey).Result()
+	cachedCustomer, err := cache.RedisClient.Client.Get(ctx, cacheKey).Result()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, cachedCustomer)
 }
