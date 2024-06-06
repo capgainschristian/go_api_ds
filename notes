@@ -7,6 +7,8 @@ docker compose run --service-ports web bash
 #Running app from the container
 go run cmd/main.go -b 0.0.0.0
 
+# Get into your app container from a different terminal while it's up and running
+docker exec -it go_api_ds-web-1 bash
 # Get into your sql container to run queries directly
 docker exec -it go_api_ds-db-1 psql -U capgainschristian -d customers
 # Once in, run the following command:

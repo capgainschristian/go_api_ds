@@ -202,7 +202,6 @@ func UpdateCustomer(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 
 	err = database.DB.Db.Where("email = ?", updatedinfo.Email).First(&customer).Error
 	if err != nil {
-		fmt.Printf("GORM error: %s\n", err.Error)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			http.Error(w, "Customer not found", http.StatusNotFound)
 			return

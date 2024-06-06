@@ -97,21 +97,6 @@ func TestUpdateCustomer(t *testing.T) {
 		t.Fatal("Database is not initialized")
 	}
 
-	// Ensure the account doesn't exist already.
-	result := database.DB.Db.Exec("DELETE FROM customers WHERE email = ?", "christian.graham@grahamsummitllc.com")
-	if result.Error != nil {
-		t.Fatal("Failed to delete from customers:", result.Error)
-	}
-
-	//initialCustomer := &models.Customer{
-	//Name:    "Christian Graham",
-	//Email:   "christian.graham@grahamsummitllc.com",
-	//Address: "777 Summit LLC Drive",
-	//Number:  1111,
-	//}
-
-	//database.DB.Db.Create(initialCustomer)
-
 	// Update the customer
 	updatedCustomer := &models.Customer{
 		Name:    "Christian Updated",
