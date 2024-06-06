@@ -2,14 +2,19 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,17 +28,37 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func setupRouter(rdb *redis.Client) *mux.Router {
+	router := mux.NewRouter()
+	router.HandleFunc("/addcustomer", func(w http.ResponseWriter, r *http.Request) {
+		AddCustomer(w, r, rdb)
+	}).Methods("POST")
+	return router
+}
+
 func TestAddCustomer(t *testing.T) {
 	if database.DB.Db == nil {
 		t.Fatal("Database is not initialized")
 	}
+
+	redisPassword := os.Getenv("RDB_PASSWORD")
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "cache:6379",
+		Password: redisPassword,
+		DB:       0,
+	})
+
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+
 	// This wipes the database first before running the test - future improvement is to spawn a different db for testing
 	result := database.DB.Db.Exec("DELETE FROM customers")
 	if result.Error != nil {
 		t.Fatal("Failed to delete from customers:", result.Error)
 	}
-	router := mux.NewRouter()
-	router.HandleFunc("/customer", AddCustomer).Methods("POST")
+	router := setupRouter(rdb)
 
 	customer := &models.Customer{
 		Name:    "Christian Graham",
@@ -44,7 +69,7 @@ func TestAddCustomer(t *testing.T) {
 
 	jsonCustomer, _ := json.Marshal(customer)
 
-	req, err := http.NewRequest("POST", "/customer", bytes.NewBuffer(jsonCustomer))
+	req, err := http.NewRequest("POST", "/addcustomer", bytes.NewBuffer(jsonCustomer))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,10 +82,27 @@ func TestAddCustomer(t *testing.T) {
 	expected := "Customer added successfully."
 	assert.Equal(t, expected, rr.Body.String())
 
-	// Verify customer was added
+	// Verify customer was added to the database
 	var count int64
 	database.DB.Db.Model(models.Customer{}).Where("email = ?", customer.Email).Count(&count)
 	assert.Equal(t, int64(1), count)
+
+	ctx := context.Background()
+	cacheKey := "customer:" + strconv.Itoa(int(customer.ID)) // Assuming customer.ID is the unique identifier
+	customerJSON, err := json.Marshal(customer)
+	if err != nil {
+		t.Fatalf("Failed to marshal customer: %v", err)
+	}
+
+	err = rdb.Set(ctx, cacheKey, customerJSON, 24*time.Hour).Err()
+	if err != nil {
+		t.Fatalf("Failed to add customer to the cache: %v", err)
+	}
+
+	// Verify customer was added to the cache
+	cachedCustomer, err := rdb.Get(ctx, cacheKey).Result()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, cachedCustomer)
 }
 
 func TestDeleteCustomer(t *testing.T) {

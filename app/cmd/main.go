@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/routes"
@@ -27,9 +28,10 @@ func main() {
 
 	database.ConnectDb()
 
+	redisPassword := os.Getenv("RDB_PASSWORD")
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     "cache:6379",
-		Password: "capgainschristian",
+		Password: redisPassword,
 		DB:       0,
 	})
 
