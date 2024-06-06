@@ -92,6 +92,60 @@ func TestAddCustomer(t *testing.T) {
 	assert.NotEmpty(t, cachedCustomer)
 }
 
+func TestUpdateCustomer(t *testing.T) {
+	if database.DB.Db == nil {
+		t.Fatal("Database is not initialized")
+	}
+
+	// Ensure the account doesn't exist already.
+	result := database.DB.Db.Exec("DELETE FROM customers WHERE email = ?", "christian.graham@grahamsummitllc.com")
+	if result.Error != nil {
+		t.Fatal("Failed to delete from customers:", result.Error)
+	}
+
+	//initialCustomer := &models.Customer{
+	//Name:    "Christian Graham",
+	//Email:   "christian.graham@grahamsummitllc.com",
+	//Address: "777 Summit LLC Drive",
+	//Number:  1111,
+	//}
+
+	//database.DB.Db.Create(initialCustomer)
+
+	// Update the customer
+	updatedCustomer := &models.Customer{
+		Name:    "Christian Updated",
+		Email:   "christian.graham@grahamsummitllc.com",
+		Address: "888 Summit LLC Drive",
+		Number:  2222,
+	}
+
+	jsonCustomer, _ := json.Marshal(updatedCustomer)
+
+	router := routes.SetupRouter(cache.RedisClient.Client)
+
+	req, err := http.NewRequest("PUT", "/updatecustomer", bytes.NewBuffer(jsonCustomer))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	expected := "Customer's information updated successfully."
+	assert.Equal(t, expected, rr.Body.String())
+
+	// Verify customer was updated
+	var customer models.Customer
+	err = database.DB.Db.Where("email = ?", updatedCustomer.Email).First(&customer).Error
+	assert.NoError(t, err)
+	assert.Equal(t, updatedCustomer.Name, customer.Name)
+	assert.Equal(t, updatedCustomer.Address, customer.Address)
+	assert.Equal(t, updatedCustomer.Number, customer.Number)
+}
+
 func TestDeleteCustomer(t *testing.T) {
 
 	customer := &models.Customer{

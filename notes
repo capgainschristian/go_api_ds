@@ -7,6 +7,11 @@ docker compose run --service-ports web bash
 #Running app from the container
 go run cmd/main.go -b 0.0.0.0
 
+# Get into your sql container to run queries directly
+docker exec -it go_api_ds-db-1 psql -U capgainschristian -d customers
+# Once in, run the following command:
+customers=# SELECT * FROM customers;
+
 #Delete everything
 docker system prune -f && \
 docker volume rm $(docker volume ls -q --filter dangling=true)
@@ -17,7 +22,7 @@ curl http://localhost:3000/listcustomers
 #Send post request
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"name":"Kiarra Kohler","email":"christyvolkman@kulas.net","address":"7797 Valleyland, Houston, New Mexico, 10683","number":84}' \
+  --data '{"name":"Christian Graham,","email":"christian.graham@grahamsummitllc.com","address":"777 Summit LLC Drive","number":2222}' \
   http://localhost:3000/addcustomer
 
 
