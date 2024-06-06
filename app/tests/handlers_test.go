@@ -1,4 +1,4 @@
-package handlers
+package tests
 
 import (
 	"bytes"
@@ -14,8 +14,7 @@ import (
 	"github.com/capgainschristian/go_api_ds/cache"
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
-	"github.com/go-redis/redis/v8"
-	"github.com/gorilla/mux"
+	"github.com/capgainschristian/go_api_ds/routes"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,14 +29,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func setupRouter(rdb *redis.Client) *mux.Router {
-	router := mux.NewRouter()
-	router.HandleFunc("/addcustomer", func(w http.ResponseWriter, r *http.Request) {
-		AddCustomer(w, r, rdb)
-	}).Methods("POST")
-	return router
-}
-
 func TestAddCustomer(t *testing.T) {
 	if database.DB.Db == nil {
 		t.Fatal("Database is not initialized")
@@ -48,12 +39,11 @@ func TestAddCustomer(t *testing.T) {
 		log.Fatalf("Redis is not running: %v", err)
 	}
 
-	// This wipes the database first before running the test - future improvement is to spawn a different db for testing
-	result := database.DB.Db.Exec("DELETE FROM customers")
+	// Ensure the account doesn't exist already.
+	result := database.DB.Db.Exec("DELETE FROM customers WHERE email = ?", "christian.graham@grahamsummitllc.com")
 	if result.Error != nil {
 		t.Fatal("Failed to delete from customers:", result.Error)
 	}
-	router := setupRouter(cache.RedisClient.Client)
 
 	customer := &models.Customer{
 		Name:    "Christian Graham",
@@ -63,6 +53,8 @@ func TestAddCustomer(t *testing.T) {
 	}
 
 	jsonCustomer, _ := json.Marshal(customer)
+
+	router := routes.SetupRouter(cache.RedisClient.Client)
 
 	req, err := http.NewRequest("POST", "/addcustomer", bytes.NewBuffer(jsonCustomer))
 	if err != nil {
@@ -101,8 +93,6 @@ func TestAddCustomer(t *testing.T) {
 }
 
 func TestDeleteCustomer(t *testing.T) {
-	// This wipes the database first before running the test - future improvement is to spawn a different db for testing
-	database.DB.Db.Exec("DELETE FROM customers")
 
 	customer := &models.Customer{
 		Name:    "Christian Graham",
@@ -113,15 +103,14 @@ func TestDeleteCustomer(t *testing.T) {
 
 	database.DB.Db.Create(&customer)
 
-	router := mux.NewRouter()
-	router.HandleFunc("/customer", DeleteCustomer).Methods("DELETE")
-
 	jsonCustomer, _ := json.Marshal(map[string]interface{}{
 		"id":    customer.ID,
 		"email": customer.Email,
 	})
 
-	req, err := http.NewRequest("DELETE", "/customer", bytes.NewBuffer(jsonCustomer))
+	router := routes.SetupRouter(cache.RedisClient.Client)
+
+	req, err := http.NewRequest("DELETE", "/deletecustomer", bytes.NewBuffer(jsonCustomer))
 	if err != nil {
 		t.Fatal()
 	}
