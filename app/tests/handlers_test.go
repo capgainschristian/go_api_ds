@@ -101,8 +101,6 @@ func TestDeleteCustomer(t *testing.T) {
 		Number:  1111,
 	}
 
-	database.DB.Db.Create(&customer)
-
 	jsonCustomer, _ := json.Marshal(map[string]interface{}{
 		"id":    customer.ID,
 		"email": customer.Email,
