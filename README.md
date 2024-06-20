@@ -120,3 +120,28 @@ curl --header "Content-Type: application/json" \
   --data '{"email":"christian.graham@grahamsummitllc.com"}' \
   http://localhost:3000/deletecustomer
 ```
+### PostgreSQL
+
+If you ever need to get into the PostgreSQL container, run the following:
+
+```
+docker exec -it go_api_ds-db-1 psql -U capgainschristian -d customers
+```
+Once you're inside, you can run queries normally like:
+
+```
+SELECT * FROM customers;
+```
+
+### Working on the application
+
+As stated above, you don't need Go installed but you do need Docker to run the application. The same can be said when working on the project. If you want to further develop, or edit, any of Go code, simply run:
+
+```
+docker compose run --service-ports web bash
+```
+This will take you into a container with Go already installed. After making your changes, you can run the app from the container:
+
+```
+go run cmd/main.go -b 0.0.0.0
+```
