@@ -9,3 +9,9 @@ type Customer struct {
 	Address string `json:"address" gorm:"type:text;not null;default:null"`
 	Number  int    `json:"number" gorm:"not null;default:0"`
 }
+
+type User struct {
+	gorm.Model
+	Email   string `json:"email" gorm:"primaryKey;type:varchar(100);not null;uniqueIndex"`
+	Password string  `json:"password" gorm:"type:text;not null;default:null"`
+}

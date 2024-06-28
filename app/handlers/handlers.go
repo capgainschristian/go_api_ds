@@ -14,6 +14,8 @@ import (
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
 	"github.com/go-redis/redis/v8"
+	//"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -21,6 +23,44 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	fmt.Fprint(w, "API is up and running.")
+}
+
+func SignUp(w http.ResponseWriter, r *http.Request) {
+	newUser := new(models.User)
+
+	err := json.NewDecoder(r.Body).Decode(&newUser)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if newUser.Email == "" {
+		http.Error(w, "Missing user email", http.StatusBadRequest)
+		return
+	}
+
+	if newUser.Password == "" {
+		http.Error(w, "Missing user password", http.StatusBadRequest)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), 10)
+	if err != nil {
+		http.Error(w, "Failed to hash the password", http.StatusInternalServerError)
+		return
+	}
+
+	// Need to convert byte to string to pass to DB
+	newUser.Password = string(hash)
+
+	err = database.DB.Db.Create(&newUser).Error
+	if err != nil {
+		http.Error(w, "Failed to add user to the database", http.StatusInternalServerError)
+		return
+	}
+	
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte("User added successfully."))
 }
 
 func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
