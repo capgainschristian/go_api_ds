@@ -71,14 +71,4 @@ func main() {
 		log.Printf("Customer added successfully: %s\n", customer.Name)
 
 	}
-
-	//for _, dataPoint := range dataPoints {
-	////fmt.Printf("Data Point %d:\n", i+1)
-	//fmt.Printf("Name: %s\n", dataPoint["name"])
-	//fmt.Printf("Email: %s\n", dataPoint["email"])
-	//fmt.Printf("Address: %s, %s, %s, %s\n", dataPoint["street"], dataPoint["city"], dataPoint["state"], dataPoint["zip"])
-	//fmt.Printf("Number: %d\n", dataPoint["number"])
-	//fmt.Println("----------------------------------")
-	//}
-
 }

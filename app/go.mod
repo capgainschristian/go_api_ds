@@ -1,8 +1,6 @@
 module github.com/capgainschristian/go_api_ds
 
-go 1.21
-
-toolchain go1.22.4
+go 1.19
 
 require (
 	github.com/brianvoe/gofakeit/v6 v6.28.0
