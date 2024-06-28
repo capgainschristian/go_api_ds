@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
-	"os"
 
 	"github.com/capgainschristian/go_api_ds/cache"
 	"github.com/capgainschristian/go_api_ds/database"
@@ -59,7 +59,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to add user to the database", http.StatusInternalServerError)
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("User added successfully."))
 }
@@ -74,10 +74,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := new(models.User)
-	
+
 	if authReq.Email == "" {
-			http.Error(w, "Need user email to query the database", http.StatusBadRequest)
-		return	
+		http.Error(w, "Need user email to query the database", http.StatusBadRequest)
+		return
 	} else {
 		err = database.DB.Db.Unscoped().Where("email = ?", authReq.Email).First(&user).Error
 		if err != nil {
@@ -96,11 +96,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Incorrect password", http.StatusBadRequest)
 		return
 	}
-	
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-	"sub": user.ID,
-	"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
-})
+		"sub": user.ID,
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+	})
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
@@ -110,12 +110,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "token",
 		Value:    tokenString,
 		Path:     "/",
-		Expires:  time.Now().Add(time.Hour * 24 * 30), 
-		HttpOnly: true,                                
-		Secure:   false,                                
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		HttpOnly: true,
+		Secure:   false,
 	})
 
-	fmt.Println(tokenString, err)
+	w.Write([]byte("Authentication was successful."))
 	w.WriteHeader(http.StatusOK)
 }
 
