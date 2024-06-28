@@ -9,12 +9,13 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"os"
 
 	"github.com/capgainschristian/go_api_ds/cache"
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
 	"github.com/go-redis/redis/v8"
-	//"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -61,6 +62,51 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("User added successfully."))
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	authReq := new(models.User)
+
+	err := json.NewDecoder(r.Body).Decode(&authReq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user := new(models.User)
+	
+	if authReq.Email == "" {
+			http.Error(w, "Need user email to query the database", http.StatusBadRequest)
+		return	
+	} else {
+		err = database.DB.Db.Unscoped().Where("email = ?", authReq.Email).First(&user).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				http.Error(w, "Customer not found", http.StatusNotFound)
+				return
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(authReq.Password))
+	if err != nil {
+		http.Error(w, "Incorrect password", http.StatusBadRequest)
+		return
+	}
+	
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	"sub": user.ID,
+	"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+})
+
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
+
+	fmt.Println(tokenString, err)
+	w.WriteHeader(http.StatusOK)
 }
 
 func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {

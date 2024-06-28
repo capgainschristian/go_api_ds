@@ -13,6 +13,7 @@ func SetupRouter(rdb *redis.Client) *mux.Router {
 
 	r.HandleFunc("/healthcheck", handlers.HealthCheck).Methods("GET")
 	r.HandleFunc("/signup", handlers.SignUp).Methods("POST")
+	r.HandleFunc("/login", handlers.Login).Methods("POST")
 	r.HandleFunc("/listcustomers", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ListCustomers(w, r, rdb)
 	}).Methods("GET")
