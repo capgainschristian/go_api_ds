@@ -105,6 +105,16 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
 
+	// Set the token as a cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 24 * 30), 
+		HttpOnly: true,                                
+		Secure:   false,                                
+	})
+
 	fmt.Println(tokenString, err)
 	w.WriteHeader(http.StatusOK)
 }
