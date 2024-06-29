@@ -104,6 +104,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
+	if err != nil {
+		http.Error(w, "Unable to encrypt and create token", http.StatusInternalServerError)
+		return
+	}
 
 	// Set the token as a cookie
 	http.SetCookie(w, &http.Cookie{
