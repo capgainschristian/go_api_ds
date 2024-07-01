@@ -58,7 +58,7 @@ func main() {
 			"--header", "Content-Type: application/json",
 			"--request", "POST",
 			"--data", string(jsonData),
-			"http://localhost:3000/addcustomer",
+			"http://localhost:3000/customercreation",
 		)
 
 		output, err := curlCommand.CombinedOutput()

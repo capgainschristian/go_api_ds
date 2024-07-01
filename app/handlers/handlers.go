@@ -99,7 +99,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days expiration
 	})
 
 	// Sign and get the complete encoded token as a string using the secret

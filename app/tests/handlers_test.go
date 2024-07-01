@@ -135,7 +135,7 @@ func TestAddCustomer(t *testing.T) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Email,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days expiration
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
@@ -211,7 +211,7 @@ func TestUpdateCustomer(t *testing.T) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Email,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days expiration
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
@@ -273,7 +273,7 @@ func TestDeleteCustomer(t *testing.T) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Email,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days expiration
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
