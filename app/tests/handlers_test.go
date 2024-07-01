@@ -15,6 +15,7 @@ import (
 	"github.com/capgainschristian/go_api_ds/database"
 	"github.com/capgainschristian/go_api_ds/models"
 	"github.com/capgainschristian/go_api_ds/routes"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -116,6 +117,11 @@ func TestAddCustomer(t *testing.T) {
 		t.Fatal("Failed to delete from customers:", result.Error)
 	}
 
+	user := &models.User{
+		Email:    "admin@grahamsummitllc.com",
+		Password: "thisissecured",
+	}
+
 	customer := &models.Customer{
 		Name:    "Christian Graham",
 		Email:   "christian.graham@grahamsummitllc.com",
@@ -127,11 +133,29 @@ func TestAddCustomer(t *testing.T) {
 
 	router := routes.SetupRouter(cache.RedisClient.Client)
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.Email,
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
+	if err != nil {
+		t.Fatal("Failed to sign token:", err)
+	}
+
 	req, err := http.NewRequest("POST", "/addcustomer", bytes.NewBuffer(jsonCustomer))
 	if err != nil {
 		t.Fatal(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		HttpOnly: true,
+		Secure:   false,
+	})
 
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
@@ -168,6 +192,11 @@ func TestUpdateCustomer(t *testing.T) {
 		t.Fatal("Database is not initialized")
 	}
 
+	user := &models.User{
+		Email:    "admin@grahamsummitllc.com",
+		Password: "thisissecured",
+	}
+
 	// Update the customer
 	updatedCustomer := &models.Customer{
 		Name:    "Christian Updated",
@@ -180,11 +209,30 @@ func TestUpdateCustomer(t *testing.T) {
 
 	router := routes.SetupRouter(cache.RedisClient.Client)
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.Email,
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
+	if err != nil {
+		t.Fatal("Failed to sign token:", err)
+	}
+
 	req, err := http.NewRequest("PUT", "/updatecustomer", bytes.NewBuffer(jsonCustomer))
 	if err != nil {
 		t.Fatal(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		HttpOnly: true,
+		Secure:   false,
+	})
 
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
@@ -204,6 +252,11 @@ func TestUpdateCustomer(t *testing.T) {
 
 func TestDeleteCustomer(t *testing.T) {
 
+	user := &models.User{
+		Email:    "admin@grahamsummitllc.com",
+		Password: "thisissecured",
+	}
+
 	customer := &models.Customer{
 		Name:    "Christian Graham",
 		Email:   "christian.graham@grahamsummitllc.com",
@@ -218,11 +271,29 @@ func TestDeleteCustomer(t *testing.T) {
 
 	router := routes.SetupRouter(cache.RedisClient.Client)
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.Email,
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 24 hr expiration
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("BCRYPT_KEY")))
+	if err != nil {
+		t.Fatal("Failed to sign token:", err)
+	}
+
 	req, err := http.NewRequest("DELETE", "/deletecustomer", bytes.NewBuffer(jsonCustomer))
 	if err != nil {
 		t.Fatal()
 	}
 	req.Header.Set("Content-Type", "applicaton/json")
+	req.AddCookie(&http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		HttpOnly: true,
+		Secure:   false,
+	})
 
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
