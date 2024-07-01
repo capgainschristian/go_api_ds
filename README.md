@@ -90,11 +90,33 @@ go test -v
 
 Make sure that the application is running. Open another terminal and follow the instructions below. If a user with the same information is already created, the examples will not work. In that situation, change the customer information.
 
+**NOTE:** You must be authenticated to add, update, or delete customers. Once you signup for an account, you will receive a token for authentication. The token is added to your cookie automatically. Therefore, it is easier to run these APIs with Postman or VSCode Thunder Client. Otherwise, you will need to include your token in all of your curl requests.
+
+To signup for an account:
+
+```
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{"email":"alexander.graham@grahamsummitllc.com,","password":"thisisaverystrongpassword"}' \
+  http://localhost:3000/signup
+```
+
+To login/auithenticate with your new account:
+
+```
+curl --header "Content-Type: application/json" \
+  --verbose \
+  --request POST \
+  --data '{"email":"alexander.graham@grahamsummitllc.com,","password":"thisisaverystrongpassword"}' \
+  http://localhost:3000/login
+```
+
 To add a customer:
 
 ```
 curl --header "Content-Type: application/json" \
   --request POST \
+  -b "token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjI0NTI3OTMsInN1YiI6ImFsZXhhbmRlci5ncmFoYW1AZ3JhaGFtc3VtbWl0bGxjLmNvbSwifQ.tO7v42pkJHqeX81g4yG2apuRGv1YGtGpN9Wrmre4NBg" \
   --data '{"name":"Christian Graham,","email":"christian.graham@grahamsummitllc.com","address":"777 Summit LLC Drive","number":2222}' \
   http://localhost:3000/addcustomer
 ```
@@ -103,6 +125,7 @@ To update a customer:
 
 ```
 curl -X PUT http://localhost:3000/updatecustomer \
+      -b "token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjI0NTI3OTMsInN1YiI6ImFsZXhhbmRlci5ncmFoYW1AZ3JhaGFtc3VtbWl0bGxjLmNvbSwifQ.tO7v42pkJHqeX81g4yG2apuRGv1YGtGpN9Wrmre4NBg" \
      -H "Content-Type: application/json" \
      -d '{
            "email": "christian.graham@grahamsummitllc.com",
@@ -117,6 +140,7 @@ To delete a customer:
 ```
 curl --header "Content-Type: application/json" \
   --request DELETE \
+  -b "token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjI0NTI3OTMsInN1YiI6ImFsZXhhbmRlci5ncmFoYW1AZ3JhaGFtc3VtbWl0bGxjLmNvbSwifQ.tO7v42pkJHqeX81g4yG2apuRGv1YGtGpN9Wrmre4NBg" \
   --data '{"email":"christian.graham@grahamsummitllc.com"}' \
   http://localhost:3000/deletecustomer
 ```
