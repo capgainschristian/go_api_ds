@@ -29,6 +29,77 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func TestSignUp(t *testing.T) {
+	if database.DB.Db == nil {
+		t.Fatal(("Database is not initialized"))
+	}
+
+	result := database.DB.Db.Exec("DELETE FROM users WHERE email = ?", "admin@grahamsummitllc.com")
+	if result.Error != nil {
+		t.Fatal("Failed to delete from customers:", result.Error)
+	}
+
+	user := &models.User{
+		Email:    "admin@grahamsummitllc.com",
+		Password: "thisissecured",
+	}
+
+	jsonUser, _ := json.Marshal(user)
+
+	router := routes.SetupRouter(cache.RedisClient.Client)
+
+	req, err := http.NewRequest("POST", "/signup", bytes.NewBuffer(jsonUser))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusAccepted, rr.Code)
+	expected := "User added successfully."
+	assert.Equal(t, expected, rr.Body.String())
+
+	var count int64
+	database.DB.Db.Model(models.User{}).Where("email = ?", user.Email).Count(&count)
+	assert.Equal(t, int64(1), count)
+}
+
+func TestLogin(t *testing.T) {
+	if database.DB.Db == nil {
+		t.Fatal("Database is not initialized")
+	}
+
+	result := database.DB.Db.Exec("SELECT FROM users WHERE email = ?", "admin@grahamsummitllc.com")
+	if result.Error != nil {
+		t.Fatal("User does not exist:", result.Error)
+	}
+
+	user := &models.User{
+		Email:    "admin@grahamsummitllc.com",
+		Password: "thisissecured",
+	}
+
+	jsonUser, _ := json.Marshal(user)
+
+	router := routes.SetupRouter(cache.RedisClient.Client)
+
+	req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(jsonUser))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	expected := "Authentication was successful."
+	assert.Equal(t, expected, rr.Body.String())
+
+}
+
 func TestAddCustomer(t *testing.T) {
 	if database.DB.Db == nil {
 		t.Fatal("Database is not initialized")
