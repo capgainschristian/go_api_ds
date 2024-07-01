@@ -4,6 +4,7 @@
 Backend Go API application that can be used in production.[^1] The application can add, remove, list, and update customers that are saved in a PostgreSQL database. It uses a redis container as a caching layer. The project has examples of: 
 
 &emsp;*API gateway/security.* \
+&emsp;*Goroutine/multithreading.* 
 &emsp;*Database interactions.* \
 &emsp;*Data serialization/deserialization.* \
 &emsp;*Full error handling.* \
@@ -12,11 +13,6 @@ Backend Go API application that can be used in production.[^1] The application c
 &emsp;*Redis caching.* \
 &emsp;*Containerization orchestration.* \
 &emsp;*Full Rest API CRUD functionalities.*
-
-Future examples to be included: 
-
-&emsp;*Goroutine/multithreading.* 
-
 
 [^1]: The .env file is not encrypted and all secrets are visible for ease of use. If you intend to use this for production, please encrypt the .env file and change the variable values!
 
