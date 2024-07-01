@@ -98,7 +98,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
+		"sub": user.Email,
 		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days expiration
 	})
 
