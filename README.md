@@ -4,7 +4,7 @@
 Backend Go API application that can be used in production.[^1] The application can add, remove, list, and update customers that are saved in a PostgreSQL database. It uses a redis container as a caching layer. The project has examples of: 
 
 &emsp;*API gateway/security.* \
-&emsp;*Goroutine/multithreading.* 
+&emsp;*Goroutine/multithreading.* \
 &emsp;*Database interactions.* \
 &emsp;*Data serialization/deserialization.* \
 &emsp;*Full error handling.* \
