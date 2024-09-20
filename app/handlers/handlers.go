@@ -123,7 +123,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
+func ListCustomers(w http.ResponseWriter, r *http.Request) {
 	// Pagination: listcustomers?limit=10&offset=0
 	customers := []models.Customer{}
 
@@ -187,7 +187,7 @@ func ListCustomers(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
 
 }
 
-func AddCustomer(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
+func AddCustomer(w http.ResponseWriter, r *http.Request) {
 	customer := new(models.Customer)
 
 	err := json.NewDecoder(r.Body).Decode(&customer)
@@ -281,7 +281,7 @@ func DeleteCustomer(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func UpdateCustomer(w http.ResponseWriter, r *http.Request, rdb *redis.Client) {
+func UpdateCustomer(w http.ResponseWriter, r *http.Request) {
 	// Representation of the updated info
 	var updatedinfo models.Customer
 

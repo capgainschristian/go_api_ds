@@ -78,7 +78,7 @@ http://localhost:3000/listcustomers?limit=100&offset=0
 If you want to run the unit tests, run the following inside the *go_api_ds-web-1* container:
 
 ```
-cd tests
+cd handlers
 
 go test -v
 ```

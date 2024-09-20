@@ -28,7 +28,7 @@ func main() {
 
 	cache.ConnectRedis()
 
-	router := routes.SetupRouter(cache.RedisClient.Client)
+	router := routes.SetupRouter()
 
 	log.Printf("Server listening on :%d...\n", PORT)
 
