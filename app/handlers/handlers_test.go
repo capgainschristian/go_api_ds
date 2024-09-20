@@ -47,7 +47,7 @@ func TestSignUp(t *testing.T) {
 
 	jsonUser, _ := json.Marshal(user)
 
-	router := routes.SetupRouter(cache.RedisClient.Client)
+	router := routes.SetupRouter()
 
 	req, err := http.NewRequest("POST", "/signup", bytes.NewBuffer(jsonUser))
 	if err != nil {
@@ -84,7 +84,7 @@ func TestLogin(t *testing.T) {
 
 	jsonUser, _ := json.Marshal(user)
 
-	router := routes.SetupRouter(cache.RedisClient.Client)
+	router := routes.SetupRouter()
 
 	req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(jsonUser))
 	if err != nil {
@@ -131,7 +131,7 @@ func TestAddCustomer(t *testing.T) {
 
 	jsonCustomer, _ := json.Marshal(customer)
 
-	router := routes.SetupRouter(cache.RedisClient.Client)
+	router := routes.SetupRouter()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Email,
@@ -207,7 +207,7 @@ func TestUpdateCustomer(t *testing.T) {
 
 	jsonCustomer, _ := json.Marshal(updatedCustomer)
 
-	router := routes.SetupRouter(cache.RedisClient.Client)
+	router := routes.SetupRouter()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Email,
@@ -269,7 +269,7 @@ func TestDeleteCustomer(t *testing.T) {
 		"email": customer.Email,
 	})
 
-	router := routes.SetupRouter(cache.RedisClient.Client)
+	router := routes.SetupRouter()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Email,
