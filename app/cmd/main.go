@@ -1,13 +1,3 @@
-// Need to add:
-// Error handling for all.
-// Testing. - Need to fix testing.
-// Pagination for "all" retrieval.
-// Redis/caching. - Need to add to update. Then introduce async to make it even faster.
-// ENV vars/const.
-// Authorization?
-
-// CRUD: Create (Post), Read (Get), Update (Put), Delete (Delete)
-
 package main
 
 import (
